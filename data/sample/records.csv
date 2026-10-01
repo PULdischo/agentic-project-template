@@ -1,0 +1,6 @@
+id,date,text,restricted
+r001,1918-03-14,"Dear Mother,   the weather has turned and we are   moved again tomorrow.",false
+r002,1918-04-02,"Received your parcel. The socks are a blessing; the mud is everywhere.",false
+r003,1918-04-20,"[Private medical details: redacted in sample]",true
+r004,1918-05-11,"The shelling went on all night. Two of our section were wounded.",false
+r005,1918-06-01,"Please tell Father the harvest news made me laugh for the first time in weeks.",false
