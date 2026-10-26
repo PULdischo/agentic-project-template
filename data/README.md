@@ -17,6 +17,8 @@
 - `processed/`: outputs from `uv run python -m project.pipeline`. Regenerated from `raw/` and not committed.
 - `sample/`: a small, de-identified subset that is committed. Used by tests and CI. Must contain nothing restricted.
 
+The coding agent never sees values from `raw/` or `processed/`, because a hosted agent would send them to its provider. It learns their format from `uv run python scripts/inspect_data.py`, which prints columns, types and counts only, and takes examples from `sample/`. That makes `sample/` the only data the agent reads, so keep it representative.
+
 ## Where restricted data may go
 
 <e.g. Records marked restricted stay in `raw/` on approved machines only. They are never sent to external model APIs.>

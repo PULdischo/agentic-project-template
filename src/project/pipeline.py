@@ -15,17 +15,21 @@ FIELDS = ["id", "date", "text", "restricted"]
 
 
 def load(path: Path) -> list[dict]:
-    """Read records and validate them at the trust boundary (DATA-001, DATA-003)."""
+    """Read records and validate them at the trust boundary (DATA-001, DATA-003).
+
+    Errors name the file, line and column but never quote a value, so data does not leak into logs.
+    """
     with open(path, newline="", encoding="utf-8") as f:
         reader = csv.DictReader(f)
         if reader.fieldnames != FIELDS:
-            raise ValueError(f"{path}: expected columns {FIELDS}, got {reader.fieldnames}")
+            got = len(reader.fieldnames or [])  # not the names: a file without a header would print its first row
+            raise ValueError(f"{path}: expected columns {FIELDS}, got {got} other columns")
         rows = list(reader)
     for line, row in enumerate(rows, start=2):
         try:
             date.fromisoformat(row["date"])
         except ValueError:
-            raise ValueError(f"{path}:{line}: date {row['date']!r} is not YYYY-MM-DD") from None
+            raise ValueError(f"{path}:{line}: date is not YYYY-MM-DD") from None
         if row["restricted"] not in ("true", "false"):
             raise ValueError(f"{path}:{line}: restricted must be 'true' or 'false'")
     return rows

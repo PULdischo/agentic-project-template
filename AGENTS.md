@@ -1,7 +1,7 @@
 # Agent instructions
 
 This file is the single source of instructions for any coding agent (Claude Code, Copilot, Codex, Zed, local models).
-Tool-specific files (`CLAUDE.md`, `.github/copilot-instructions.md`) only point here.
+Tool-specific files (`CLAUDE.md`, `.github/copilot-instructions.md`, `.claude/`) only point here or enforce rules written here.
 
 ## How this project works
 
@@ -17,6 +17,7 @@ uv run python scripts/check_coverage.py         # every criterion covered by a t
 uv run python evals/run_evals.py --dry-run      # validate eval cases without calling a model
 uv run python evals/run_evals.py                # run evals against EVAL_BASE_URL / EVAL_MODEL (.env)
 uv run python -m project.pipeline               # regenerate data/processed/ from data/raw/
+uv run python scripts/inspect_data.py [path]    # shape of data/raw/ (or path): columns, types, counts, no values
 grep -rn "ponytail:" src/ tests/ evals/ scripts/   # list deliberate shortcuts and their ceilings
 ```
 
@@ -31,17 +32,32 @@ When asked to "implement ready specs" (or similar):
    - eval cases: `"criteria": ["EVAL-001"]`
    - Use tests for behavior that is always the same, and evals for model behavior.
 4. Run `uv run pytest` and `uv run python scripts/check_coverage.py`. Both must pass. If you changed prompts, models or eval cases, also run `uv run python evals/run_evals.py` and compare the report against the thresholds in `specs/03-evaluation.md`. Report refusals separately; never hide them.
-5. Set the spec to `**Status:** implemented`, and add a line to the top of the table in `specs/CHANGELOG.md` with the date, spec, criteria, commit and eval report path.
-6. Summarize for the partner in plain language: what changed, which criteria are covered, what the eval report shows (including refusals), and any open questions.
+5. Set the spec to `**Status:** implemented`, and add a line to the top of the table in `specs/CHANGELOG.md` with the date, spec, criteria, commit, eval report path, and the agent and model that made the change.
+6. Write the pull request description to `pr-draft.md` (git-ignored), following `.github/pull_request_template.md`. List the assumptions the change makes and what was **not** tested; if any check failed, say so at the top. Do not push or open the PR: a human reads the diff and opens it.
+7. Summarize for the partner in plain language: what changed, which criteria are covered, what the eval report shows (including refusals), and any open questions.
+
+## Grill a draft spec
+
+When asked to "grill" a spec (or to help write one), follow `prompts/grill-spec.md`.
 
 ## Hard rules
 
 - Never modify anything in `data/raw/`.
-- Never commit secrets or `.env`. Endpoints and models come from environment variables, never from code.
+- Never look at data values in `data/raw/` or `data/processed/`: don't open them, `cat`/`head` them, or run code that prints rows. You may be a hosted model, and anything you read is sent to your provider. Learn the format with `scripts/inspect_data.py`, take examples from `data/sample/`, and write code that reports counts and structure, not values. Error messages in `src/` name the file, line and column, never the value.
+- Never push or open a pull request. A human reads the diff and opens it.
+- Never read or print `.env`. Never commit secrets or `.env`. Endpoints and models come from environment variables, never from code.
 - Never weaken, skip or delete a test or eval case to make it pass. If one seems wrong, raise it as an open question.
 - In `specs/`, only edit **Open questions**, the **Status** line and `CHANGELOG.md`. You may fix formatting drift (bullets, quotes, spacing) but never change a partner's wording.
 - Never reuse or renumber criterion IDs.
 - All data paths come from `src/project/paths.py`.
+
+## Project conventions
+
+Maintainers fill these in; delete lines that don't apply.
+
+- Units: <e.g. SI; dates as YYYY-MM-DD>
+- Naming: <file and variable naming>
+- Figures: <style file, colour-blind-safe palette, size, where alt text goes>
 
 ## Engineering practices
 

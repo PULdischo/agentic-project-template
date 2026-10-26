@@ -13,6 +13,14 @@ Why this matters, in plain language. Who needs it and what decision or result de
 
 What should happen. Describe behavior, not code.
 
+## Assumptions
+
+Optional. What this spec takes for granted (about the data, the sources, the model). Ask the agent to "grill this spec" for help.
+
+## What would show this is wrong
+
+Optional. A result that would mean the approach doesn't work, so you'd stop or change course.
+
 ## Acceptance criteria
 
 Each criterion is one checkable statement with an ID that is never reused or renumbered.

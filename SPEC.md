@@ -1,6 +1,6 @@
 # SPEC: Spec-Driven Research Project Template
 
-Status: **Implemented v1** · Owner: aj7878@princeton.edu · Last updated: 2026-10-01
+Status: **Implemented v1.1** · Owner: aj7878@princeton.edu · Last updated: 2026-10-26
 
 ## 1. Purpose
 
@@ -24,6 +24,8 @@ A reusable **GitHub template repository** for research and data science projects
 | D2 | **Distributed as a GitHub template repo** | No cookiecutter or copier. A short "after you create from template" checklist in the README replaces prompting tools. |
 | D3 | **Partners may edit specs anywhere** (GitHub web UI, VS Code, Zed, Google Docs exported to Markdown, and so on). No editor is preferred. | Specs must work as plain Markdown with no tooling, and must survive round-trips through editors that strip or mangle formatting (see §5.1). |
 | D4 | **Engineering practices adapted from [Ponytail](https://github.com/dietrichgebert/ponytail)** (MIT) | The rules are adapted into `AGENTS.md` rather than requiring the plugin, so there is no dependency or lock-in. They use the same `ponytail:` comment marker, so people who do install the plugin can use its `/ponytail-review` and `/ponytail-debt` commands. Credit goes in the README. |
+| D5 | **Tool-neutral prompts, thin tool adapters** (idea from [lsawade/agentic-coding starter-kit](https://github.com/lsawade/agentic-coding/tree/main/starter-kit)) | Reusable prompts live in `prompts/` as plain Markdown that any agent can follow. `.claude/` only wraps them (slash commands) or enforces `AGENTS.md` rules (permissions). Other tools get their own small adapter. |
+| D6 | **The coding agent never sees real data values** | A hosted agent sends what it reads to its provider. It learns the shape of `data/raw/` from `scripts/inspect_data.py` and takes examples from `data/sample/`. Humans open pull requests; the agent only drafts them. |
 
 ## 3. Core workflow
 
@@ -94,9 +96,14 @@ Kept deliberately small. Each folder exists because a workflow step in §3 uses 
 ├── AGENTS.md                     # Canonical agent instructions: workflow (§3) + practices (§4)
 ├── CLAUDE.md                     # "@AGENTS.md" (pointer only)
 ├── NOTICE.md                     # Ponytail MIT license notice (required by the license for adapted text)
+├── prompts/
+│   └── grill-spec.md             # Interrogates a draft spec; answers go under Open questions
+├── .claude/                      # Claude Code adapter (delete if unused)
+│   ├── commands/grill-spec.md    # /grill-spec → prompts/grill-spec.md
+│   └── settings.json             # Deny reading data/raw, data/processed, .env; deny push and PR creation
 ├── .github/
 │   ├── copilot-instructions.md   # Pointer to AGENTS.md
-│   ├── pull_request_template.md  # Spec IDs touched, tests/evals run, deps added, ponytail: markers added
+│   ├── pull_request_template.md  # Spec IDs, checks run, assumptions, not tested, deps added, ponytail: markers
 │   └── workflows/tests.yml       # uv sync + pytest + check_coverage on push/PR (no API keys)
 ├── specs/                        # ← partners work here
 │   ├── README.md                 # How to write/change a spec, for any editor; good vs bad criteria
@@ -105,7 +112,7 @@ Kept deliberately small. Each folder exists because a workflow step in §3 uses 
 │   ├── 01-data.md                # Sources, rights/licensing, sensitivity, expected shape
 │   ├── 02-pipeline.md            # Steps input → output; models/providers used and why
 │   ├── 03-evaluation.md          # What "good" looks like; metrics, thresholds, failure categories
-│   └── CHANGELOG.md              # Implementation log + decision notes
+│   └── CHANGELOG.md              # Implementation log (incl. agent/model) + decision notes
 ├── data/
 │   ├── README.md                 # Data card: provenance, license, sensitivity, known gaps
 │   ├── raw/                      # Immutable sources (git-ignored except .gitkeep)
@@ -117,14 +124,16 @@ Kept deliberately small. Each folder exists because a workflow step in §3 uses 
 │   └── pipeline.py               # Placeholder pipeline exercised by the example tests
 ├── tests/
 │   ├── test_data.py              # Inputs look like the spec says (schema, counts, ranges)
-│   └── test_pipeline.py          # Each stage produced sane output (no silent failures)
+│   ├── test_pipeline.py          # Each stage produced sane output (no silent failures)
+│   └── test_inspect_data.py      # inspect_data.py never prints a value
 ├── evals/
 │   ├── README.md                 # Tests vs evals; how to run and read results
 │   ├── cases.jsonl               # One case per line, tagged with criterion IDs
 │   ├── run_evals.py              # Stdlib-only runner for any OpenAI-compatible endpoint
 │   └── results/                  # Dated reports: YYYY-MM-DD_<label>.json + .md
 ├── scripts/
-│   └── check_coverage.py         # Criterion ↔ test/eval traceability
+│   ├── check_coverage.py         # Criterion ↔ test/eval traceability
+│   └── inspect_data.py           # Shape of data files (columns, types, counts), never values
 ├── notebooks/                    # Exploration only; nothing the pipeline imports
 ├── outputs/                      # Figures, tables, reports for humans
 ├── .env.example                  # EVAL_BASE_URL, EVAL_MODEL, EVAL_API_KEY (names only)
@@ -176,12 +185,16 @@ Agent and partners both add here. The agent never guesses past an open question.
 - **AGENT-01**: Contains the workflow from §3 and the practices from §4, written so any harness can follow it.
 - **AGENT-02**: Hard rules: never modify `data/raw/`; never commit secrets or `.env`; never weaken, skip or delete a test or eval to make it pass; never implement a criterion that has an open question against it.
 - **AGENT-03**: Lists the exact commands: `uv sync`, `uv run pytest`, `uv run python evals/run_evals.py [--dry-run]`, `uv run python scripts/check_coverage.py`, and `grep -rn "ponytail:" src/` to list deliberate shortcuts.
-- **AGENT-04**: `CLAUDE.md` and `.github/copilot-instructions.md` contain only a pointer to `AGENTS.md`.
+- **AGENT-04**: `CLAUDE.md` and `.github/copilot-instructions.md` contain only a pointer to `AGENTS.md`. `.claude/` only wraps `prompts/` or enforces `AGENTS.md` rules.
+- **AGENT-05**: The agent never looks at values in `data/raw/` or `data/processed/`, never reads `.env`, and never pushes or opens a pull request. It writes the PR description to `pr-draft.md` (git-ignored), including assumptions and what was not tested.
+- **AGENT-06**: `prompts/grill-spec.md` asks about assumptions, data, falsification, feasibility and scope, one question at a time, and writes the outcome only under the spec's *Open questions*. Suggested criteria are not bold, so `check_coverage.py` does not count them.
+- **AGENT-07**: `AGENTS.md` has a *Project conventions* section (units, naming, figures) for maintainers to fill in.
 
 ### 6.3 Data (`data/`)
 
 - **DATA-01**: `data/raw/` and `data/processed/` are git-ignored, apart from a `.gitkeep`. `data/sample/` is committed, small (target under 1 MB) and de-identified.
 - **DATA-02**: `data/README.md` is a data card covering source, license or rights, sensitivity level, collection dates, known gaps and contact.
+- **DATA-04**: `scripts/inspect_data.py` (stdlib only) prints the shape of CSV/TSV/JSON/JSONL files (columns or keys, types, counts, max lengths) and never a value. A first row that doesn't look like a header is not printed. Pipeline error messages name file, line and column, never the value.
 - **DATA-03**: All data paths come from `src/project/paths.py`, which builds them with `pathlib` relative to the repo root. There are no absolute paths anywhere.
 
 ### 6.4 Tests (`tests/`)
@@ -205,11 +218,11 @@ Agent and partners both add here. The agent never guesses past an open question.
 - **GH-01**: The repository is marked as a template on GitHub.
 - **GH-02**: The README has an "After creating from template" checklist: rename `src/project/`, update the `pyproject.toml` name, fill in `specs/00-project.md` and `data/README.md`, replace the examples, and delete this `SPEC.md`.
 - **GH-03**: CI (`tests.yml`) runs `uv sync`, `uv run pytest`, `check_coverage.py` and `run_evals.py --dry-run`. It needs no secrets.
-- **GH-04**: The PR template asks: which criterion IDs changed, what tests or evals were run, any new dependencies (with a reason), and any new `ponytail:` markers.
+- **GH-04**: The PR template asks: which criterion IDs changed, what tests or evals were run, assumptions, what was not tested, any new dependencies (with a reason), and any new `ponytail:` markers.
 
 ## 7. Non-goals
 
-- Not a framework or a package. It is conventions, plus three small scripts.
+- Not a framework or a package. It is conventions, plus four small scripts.
 - No provider SDKs, orchestration frameworks or LLM-eval libraries in the base template.
 - No domain-specific pipeline code beyond a minimal placeholder that the example tests exercise.
 - No R or Quarto support in the base template. A project can add it.

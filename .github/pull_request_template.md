@@ -12,6 +12,14 @@
 - [ ] `uv run python scripts/check_coverage.py`
 - [ ] `uv run python evals/run_evals.py` (if prompts, models or eval cases changed). Report: <!-- evals/results/... -->
 
+## Assumptions
+
+<!-- What this change takes for granted about the data, the spec or the environment. -->
+
+## Not tested
+
+<!-- What no test or eval checks yet, and known weaknesses of this change. "Nothing" needs a reason. -->
+
 ## New dependencies
 
 <!-- Each one with a one-line reason, or "none". -->

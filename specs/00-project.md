@@ -24,6 +24,10 @@
 |------|------|---------|
 | | | |
 
+## AI use and disclosure
+
+<Which policy applies to AI use in this project (journal, funder, university, archive), what must be disclosed, and where. The changelog records which agent and model made each change.>
+
 ## Acceptance criteria
 
 Project-level criteria are optional. Most criteria live in the data, pipeline and evaluation specs.
